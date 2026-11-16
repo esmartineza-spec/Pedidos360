@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  ms-catalog:
+    build: ./ms-catalog
+    container_name: ms-catalog
+    env_file:
+      - .env
+    volumes:
+      - type: bind
+        source: ${ORACLE_WALLET_PATH}
+        target: /wallet
+        read_only: true
+    restart: unless-stopped
+
+  ms-orders:
+    build: ./ms-orders
+    container_name: ms-orders
+    env_file:
+      - .env
+    environment:
+      CATALOG_SERVICE_URL: http://ms-catalog:8082
+    volumes:
+      - type: bind
+        source: ${ORACLE_WALLET_PATH}
+        target: /wallet
+        read_only: true
+    depends_on:
+      - ms-catalog
+    restart: unless-stopped
+
+  ms-bff:
+    build: ./ms-bff
+    container_name: ms-bff
+    environment:
+      ORDERS_SERVICE_URL: http://ms-orders:8081
+      CATALOG_SERVICE_URL: http://ms-catalog:8082
+    ports:
+      - "80:8080"
+    depends_on:
+      - ms-orders
+      - ms-catalog
+    restart: unless-stopped
+
+  ms-notificaciones:
+    build: ./ms-notificaciones
+    container_name: ms-notificaciones
+    env_file:
+      - .env
+    expose:
+      - "8083"
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8083:8083"
+
+  rabbitmq:
+    image: rabbitmq:4.4.0-management
+    container_name: pedidos360-rabbitmq
+    hostname: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-/}
+    ports:
+      - "127.0.0.1:15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "-q", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  rabbitmq_data:

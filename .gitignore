@@ -1,0 +1,40 @@
+# Configuración y secretos
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Wallet Oracle y certificados/llaves privadas
+**/Wallet_PEDIDOS360/
+**/cwallet.sso
+**/ewallet.p12
+**/ewallet.pem
+**/keystore.jks
+**/truststore.jks
+**/*.pem
+**/*.p12
+**/*.pfx
+**/*.key
+
+# Artefactos compilados y dependencias
+**/target/
+**/node_modules/
+**/dist/
+**/.angular/cache/
+**/coverage/
+
+# Archivos de IDE y sistema
+.idea/
+**/.idea/
+.vscode/
+**/.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+*.log
+
+# Exportaciones de imágenes Docker
+*.tar
+*.tar.gz
