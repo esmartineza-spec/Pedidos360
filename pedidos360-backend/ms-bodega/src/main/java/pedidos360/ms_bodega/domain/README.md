@@ -1,0 +1,1 @@
+	Conceptos del negocio, como inventario y productos gestionados por bodega.

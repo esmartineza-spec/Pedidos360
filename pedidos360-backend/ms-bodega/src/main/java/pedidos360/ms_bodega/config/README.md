@@ -1,0 +1,1 @@
+Configuración central de Spring Kafka, Kafka Admin y Kafka Streams.

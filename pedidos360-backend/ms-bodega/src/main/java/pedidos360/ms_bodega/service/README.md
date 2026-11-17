@@ -1,0 +1,1 @@
+Casos de uso y lógica de negocio de bodega.

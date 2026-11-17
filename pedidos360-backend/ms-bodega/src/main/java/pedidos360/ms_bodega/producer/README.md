@@ -1,0 +1,1 @@
+Componentes que publican eventos en Kafka mediante KafkaTemplate.

@@ -1,0 +1,1 @@
+Objetos que representan solicitudes, respuestas y eventos intercambiados

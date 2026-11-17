@@ -1,0 +1,1 @@
+Endpoints REST para consultar o administrar funciones de ms-bodega.
