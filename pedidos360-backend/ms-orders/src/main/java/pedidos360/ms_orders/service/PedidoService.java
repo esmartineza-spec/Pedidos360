@@ -12,6 +12,9 @@ import org.springframework.web.client.HttpClientErrorException;
 import pedidos360.ms_orders.messaging.dto.NotificationCommand;
 import java.time.Instant;
 import java.util.UUID;
+import pedidos360.ms_orders.messaging.kafka.PedidoKafkaEvent;
+import pedidos360.ms_orders.messaging.kafka.PedidoItemKafkaEvent;
+import pedidos360.ms_orders.messaging.kafka.PedidoKafkaPublisher;
 
 import java.util.List;
 
@@ -21,16 +24,19 @@ public class PedidoService{
     private final PedidoRepository pedidoRepository;
     private final RestClient restClient;
     private final NotificationPublisher notificationPublisher;
+    private final PedidoKafkaPublisher pedidoKafkaPublisher;
 
 
     public PedidoService(
             PedidoRepository pedidoRepository,
             NotificationPublisher notificationPublisher,
+            PedidoKafkaPublisher pedidoKafkaPublisher,
             RestClient.Builder restClientBuilder,
             @Value("${catalog.service.url}") String catalogUrl) {
 
         this.pedidoRepository = pedidoRepository;
         this.notificationPublisher = notificationPublisher;
+        this.pedidoKafkaPublisher = pedidoKafkaPublisher;
 
         this.restClient = restClientBuilder
                 .baseUrl(catalogUrl)
@@ -51,6 +57,10 @@ public class PedidoService{
         pedido.getItems().forEach(item -> item.setPedido(pedido));
         Pedido guardado = pedidoRepository.save(pedido);
 
+        pedidoKafkaPublisher.publicar(
+                crearEventoKafka("PEDIDO_CREADO", guardado)
+        );
+
         notificationPublisher.publicarCorreo(
                 crearComando("NOTIFICACION_EMAIL", guardado)
         );
@@ -59,6 +69,7 @@ public class PedidoService{
         );
 
         return guardado;
+
     }
 
     public Pedido actualizarPedido(Long id, Pedido datos) {
@@ -126,6 +137,10 @@ public class PedidoService{
 
         Pedido guardado = pedidoRepository.save(pedido);
 
+        pedidoKafkaPublisher.publicar(
+                crearEventoKafka("ESTADO_PEDIDO_CAMBIADO", guardado)
+        );
+
         notificationPublisher.publicarCorreo(
                 crearComando("NOTIFICACION_EMAIL", guardado)
         );
@@ -152,6 +167,23 @@ public class PedidoService{
                 pedido.getId(),
                 pedido.getClienteId(),
                 pedido.getEstado().name()
+        );
+    }
+
+    private PedidoKafkaEvent crearEventoKafka(String tipo, Pedido pedido) {
+        return new PedidoKafkaEvent(
+                UUID.randomUUID().toString(),
+                tipo,
+                Instant.now(),
+                pedido.getId(),
+                pedido.getClienteId(),
+                pedido.getEstado().name(),
+                pedido.getItems().stream()
+                        .map(item -> new PedidoItemKafkaEvent(
+                                item.getProductId(),
+                                item.getCantidad()
+                        ))
+                        .toList()
         );
     }
 }
